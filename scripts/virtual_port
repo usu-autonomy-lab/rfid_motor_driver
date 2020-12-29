@@ -1,0 +1,60 @@
+#!/usr/bin/python
+import serial
+import rospy
+import glob
+from std_msgs.msg import String
+
+baudrates = [4800, 9600, 19200, 38400, 57600, 115200]
+baudrate = baudrates[5]
+
+class Pub:
+    pos_publisher = rospy.Publisher("position", String, queue_size = 10)
+    pos = String()
+
+    def __init__(self):
+        rospy.init_node("Position_Publisher")
+
+def check_ports():
+    """     function that checks available serial ports 
+            and returns the selected port                  """
+
+    ports = ['/dev/pts/4']
+
+    if(len(ports) == 0):
+        print("No serial connections detected.")
+        print("Please check that the hardware is connected correctly.")
+        exit(1)
+    elif(len(ports) > 1):
+        print("Found Ports:")
+        for x in range(len(ports)):
+            print(str(x) + " - " + ports[x])
+        while True:
+            try:
+                port_num = int(raw_input("Please select a valid port number: "))
+                if(port_num not in range(len(ports))):
+                    continue
+                break
+            except ValueError:
+                continue
+        return ports[port_num]
+    else:
+        return ports[0]
+
+if __name__ == '__main__':
+    node = Pub()
+
+    port = check_ports()
+    print(port)
+    ser = serial.Serial(port, baudrate, rtscts = True, dsrdtr = True, timeout = 1)
+    print("Connected to: " + ser.portstr)
+    while True:
+        try:
+            line = ser.readline().decode('utf-8')[:-1]
+            if line:
+                node.pos_publisher.publish(line)
+                rospy.loginfo("published: " + str(line))
+        except serial.serialutil.SerialException: 
+            ser.close()
+            break
+
+    rospy.spin()

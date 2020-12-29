@@ -1,0 +1,128 @@
+#!/usr/bin/python
+
+import serial
+import rospy
+import glob
+from geometry_msgs.msg import Pose
+import gui
+import subprocess
+from numpy import pi
+from time import sleep
+
+baudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400]
+baudrate = baudrates[1]  # use baudrates[1] (9600 baud) 
+
+
+
+class Pub:
+    pos_publisher = rospy.Publisher("position", Pose, queue_size = 10)
+    pose = Pose()
+
+    def __init__(self):
+        rospy.init_node("Position_Publisher")
+
+def check_ports():
+    """     function that checks available serial ports 
+            and returns the selected port                  """
+
+    ports = glob.glob('/dev/ttyACM*')
+
+    if(len(ports) == 0):
+        print("No serial connections detected.")
+        print("Please check that the hardware is connected correctly.")
+        exit(1)
+    elif(len(ports) > 1):
+        print("Found Ports:")
+        for x in range(len(ports)):
+            print(str(x) + " - " + ports[x])
+        while True:
+            try:
+                port_num = int(raw_input("Please select a valid port number: "))
+                # port_num = 1  # just to set default for testing
+                if(port_num not in range(len(ports))):
+                    continue
+                break
+            except ValueError:
+                continue
+        return ports[port_num]
+    else:
+        return ports[0]
+
+def homing(ser, current_limit):
+    """     function that runs initially and sets the homing position   """
+
+    ser.write("MO=1;"
+              "PA=2*XM[1];"
+              "BG;"
+              "UNTIL(AN[3]>current_limit || AN[4]>current_limit || AN[5]>current_limit)"
+              "HM[2]=0;")
+    
+def parser():
+    """     function that parses the response from the motor driver     """
+    pass
+    
+def broadcast():
+    """     function that publishes current position in motor counts    """
+    while not rospy.is_shutdown():  # or slider is still moving
+        try:
+            node.pose.position.x = float(ser.readline().decode('utf-7')[:-1])
+            if node.pose.position.x:
+                node.pos_publisher.publish(node.pose)
+                rospy.loginfo("published: " + str(node.pose.position.x))
+        except serial.serialutil.SerialException: 
+            ser.close()
+            break
+        except ValueError:
+            continue
+
+        rate.sleep()
+    
+if __name__ == '__main__':
+    params = gui.gui()  # [iter,accel,decel,speed,current_limit,
+                        #  bench_x,bench_y,bench_z,bench_angle, publish rate]
+    """ errors within the following roslaunch file, removed for test...
+    subprocess.call(['roslaunch', 'bench_tf2', 'bench_test.launch', 
+                    'x:='+str(params[5]), 'y:='+str(params[6]),
+                    'z:='+str(params[7]), 'angle_rad:='+str(params[8] * 180 / pi)])
+    """
+    node = Pub()
+    rate = rospy.Rate(params[9])
+
+    port = check_ports()
+    ser = serial.Serial(port, baudrate, timeout = 1)
+    print("Connected to: " + ser.portstr)
+    
+    '''sleep(5)
+    print("Removed Homing...")
+    homing(ser, params[4])  # begin homing procedure
+    sleep(2)
+
+    print("Begin " + str(int(params[0])) + ' iterations')
+    for x in range(int(params[0])):
+	print("\t iter:" + str(x+1))
+        ser.write("PA=XM[2];"  
+                "BG;")  # move slider forward
+        broadcast()     
+        sleep(1)
+
+        ser.write("PA=100;"
+                "BG;")  # move slider back to home position plus a little tolerance 
+
+        broadcast()        
+        sleep(1)
+    '''
+
+    ser.write("MO=1;")
+    print("motor on. sleeping 3")
+    sleep(3)
+    print(ser.readline().decode('utf-7')[:-1])
+    
+    print("moving relative 100steps")
+    sleep(3)
+    ser.write("PR=100;")
+    ser.write("BG;")
+
+    print("motor off.")
+    ser.write("MO=0")
+
+    rospy.spin()

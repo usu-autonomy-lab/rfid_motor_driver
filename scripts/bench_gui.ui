@@ -1,0 +1,443 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <object class="ttk.Frame" id="bench_gui">
+    <property name="borderwidth">10</property>
+    <property name="cursor">top_left_arrow</property>
+    <property name="height">200</property>
+    <property name="padding">20</property>
+    <property name="relief">sunken</property>
+    <property name="width">200</property>
+    <layout>
+      <property name="column">0</property>
+      <property name="padx">0</property>
+      <property name="propagate">True</property>
+      <property name="row">0</property>
+    </layout>
+    <child>
+      <object class="ttk.Label" id="Title">
+        <property name="borderwidth">0</property>
+        <property name="font">{Liberation Serif} 24 {}</property>
+        <property name="text" translatable="yes">Bench Test Parameters</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="ipady">0</property>
+          <property name="pady">0</property>
+          <property name="propagate">True</property>
+          <property name="row">0</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="dropdown_menu">
+        <property name="borderwidth">7</property>
+        <property name="height">200</property>
+        <property name="padding">20</property>
+        <property name="takefocus">false</property>
+        <property name="width">200</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="propagate">True</property>
+          <property name="row">1</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="Iterations">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Number of Iterations</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="Iterations_box">
+            <property name="exportselection">true</property>
+            <property name="from_">1</property>
+            <property name="increment">1</property>
+            <property name="justify">left</property>
+            <property name="state">normal</property>
+            <property name="text" translatable="yes">10</property>
+            <property name="textvariable">int:g_iterations</property>
+            <property name="to">9999</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="Acceleration">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Acceleration (m/s^2)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="acceleration_box">
+            <property name="from_">1</property>
+            <property name="increment">100</property>
+            <property name="text" translatable="yes">4000</property>
+            <property name="textvariable">int:g_accel</property>
+            <property name="to">999999</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="Deceleration">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Deceleration (m/s^2)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">2</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="deceleration_box">
+            <property name="from_">1</property>
+            <property name="increment">100</property>
+            <property name="text" translatable="yes">4000</property>
+            <property name="textvariable">int:g_decel</property>
+            <property name="to">999999</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">2</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="Speed">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Speed (m/s)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">4</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="Speed_box">
+            <property name="from_">1</property>
+            <property name="increment">100</property>
+            <property name="text" translatable="yes">1000</property>
+            <property name="textvariable">int:g_speed</property>
+            <property name="to">999999</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">4</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="Current_Limit">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Homing Current Limit (A)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">5</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="current_limit_box">
+            <property name="from_">0</property>
+            <property name="increment">0.1</property>
+            <property name="text" translatable="yes">0.75</property>
+            <property name="textvariable">double:g_current</property>
+            <property name="to">4</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">5</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="Bench X">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Bench X Measurement (m)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">6</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="bench_x_box">
+            <property name="from_">0</property>
+            <property name="increment">0.1</property>
+            <property name="text" translatable="yes">0.5</property>
+            <property name="textvariable">double:g_bench_x</property>
+            <property name="to">10</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">6</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="Bench Y">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Bench Y Measurement (m)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">7</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="bench_y_box">
+            <property name="from_">0</property>
+            <property name="increment">0.1</property>
+            <property name="text" translatable="yes">0.5</property>
+            <property name="textvariable">double:g_bench_y</property>
+            <property name="to">10</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">7</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="Bench Z">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Bench Z Measurement (m)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">8</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="bench_z_box">
+            <property name="from_">0</property>
+            <property name="increment">0.1</property>
+            <property name="text" translatable="yes">0.5</property>
+            <property name="textvariable">double:g_bench_z</property>
+            <property name="to">10</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">8</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="Bench Angle">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Bench Angle Measurement (deg)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="ipadx">20</property>
+              <property name="propagate">True</property>
+              <property name="row">9</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="bench_angle_box">
+            <property name="from_">0</property>
+            <property name="increment">10</property>
+            <property name="text" translatable="yes">0</property>
+            <property name="textvariable">double:g_bench_angle</property>
+            <property name="to">360</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">9</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="publish_rate">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">Position Publish Rate (Hz)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="ipadx">20</property>
+              <property name="propagate">True</property>
+              <property name="row">10</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="publish_rate_box">
+            <property name="from_">1</property>
+            <property name="increment">10</property>
+            <property name="text" translatable="yes">100</property>
+            <property name="textvariable">double:g_publish_rate</property>
+            <property name="to">10000</property>
+            <property name="width">7</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">10</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="accel_default">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">  Default: 4000</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="decel_default">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">  Default: 4000</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">2</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="speed_default">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">  Default: 1000</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">4</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="current_default">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">  Default: 0.75</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">5</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="bench_x_default">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">  Default: 0.5</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">6</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="bench_y_default">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">  Default: 0.5</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">7</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="bench_z_default">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">  Default: 0.5</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">8</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="bench_angle_default">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">  Default: 0</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">9</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="publish_rate_default">
+            <property name="font">{Liberation Serif} 14 {}</property>
+            <property name="text" translatable="yes">  Default: 100</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">10</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Button" id="btn_start">
+        <property name="command">click_start</property>
+        <property name="takefocus">true</property>
+        <property name="text" translatable="yes">Start Test</property>
+        <property name="width">20</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="ipady">10</property>
+          <property name="propagate">False</property>
+          <property name="row">4</property>
+          <property name="rowspan">1</property>
+        </layout>
+      </object>
+    </child>
+  </object>
+</interface>

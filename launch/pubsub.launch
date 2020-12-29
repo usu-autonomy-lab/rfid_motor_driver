@@ -1,0 +1,18 @@
+<launch>
+
+    <node
+        name = "publisher"
+        pkg = "motor_driver"
+        type = "position"
+        ns = "test"
+        output = "screen"
+    />
+
+    <node
+        name = "subscriber"
+        pkg = "motor_driver"
+        type = "floatpos2frame"
+        ns = "test"
+    />
+
+</launch>

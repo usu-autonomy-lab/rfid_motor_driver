@@ -1,0 +1,45 @@
+#!/usr/bin/python
+import rospy
+from geometry_msgs.msg import Pose
+import tf2_ros
+import sys
+
+class create_Pose:
+    print("-------entered class: create_Pose creation---------")
+    pose = Pose()
+    print("------- finished pose = Pose() ---------")
+    tfbuffer = tf2_ros.Buffer()
+    print("------- finished tfbuffer = tf2_ros.Buffer() ---------")
+    listener = tf2_ros.TransformListener(tfbuffer)
+    print("------- finished listener = ... ---------")
+
+    def __init__(self):
+        rospy.init_node('create_pose')
+        # self.sub = rospy.Subscriber('position', Pose, self.callback)
+        self.pub = rospy.Publisher('pose', Pose, queue_size=10)     
+
+    def callback(self, msg):
+        # self.pose.position.x = msg.position.x
+        rospy.loginfo(msg.position.x)
+           
+
+if __name__ == '__main__':
+    node = create_Pose()
+    rate = rospy.Rate(10) #10 Hz
+    while not rospy.is_shutdown():
+        try:
+            trans = node.tfbuffer.lookup_transform(sys.argv[1],sys.argv[2],rospy.Time())
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rate.sleep()
+            continue
+
+        #let x be assigned from callback
+        node.pose.position.x = trans.transform.translation.x
+        node.pose.position.y = trans.transform.translation.y
+        node.pose.position.z = trans.transform.translation.z
+        node.pose.orientation.x = trans.transform.rotation.x
+        node.pose.orientation.y = trans.transform.rotation.y
+        node.pose.orientation.z = trans.transform.rotation.z
+        node.pose.orientation.w = trans.transform.rotation.w
+        node.pub.publish(node.pose)
+        rate.sleep()

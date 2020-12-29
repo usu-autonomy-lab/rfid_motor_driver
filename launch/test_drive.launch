@@ -1,0 +1,8 @@
+<launch>
+    <param name="robot_description" textfile="$(find motor_driver)/urdf/bench_model.urdf"/>
+
+    <node name="motor_driver" pkg="canopen_motor_node" type="canopen_motor_node">
+        <rosparam command="load" file="$(find motor_driver)/config/elmo.yaml"/>
+
+    </node>
+</launch>

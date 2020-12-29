@@ -1,0 +1,25 @@
+<robot name="rfid_bench">
+    <link name="base_link">
+
+    </link>
+    <link name="platform">
+
+    </link>
+
+    <joint name="motor_joint" type="prismatic">
+        <!-- other joint description elements -->
+        <parent link="base_link"/>
+        <child link="platform"/>
+        <!-- Joint limits -->
+        <limit lower="0.0"
+               upper="1.0"
+               effort="10.0"
+               velocity="5.0" />
+
+        <!-- Soft limits -->
+        <safety_controller k_position="100"
+                           k_velocity="10"
+                           soft_lower_limit="0.1"
+                           soft_upper_limit="0.9" />
+    </joint>
+</robot>
