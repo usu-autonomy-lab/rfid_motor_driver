@@ -108,9 +108,9 @@ if __name__ == '__main__':
     # print("Included Homing...")
     # homing(ser, params[4])  # begin homing procedure
 
-    maxVelocity = "1000" # default: 1000, steps/second
+    maxVelocity = "100" # default: 1000, meters per second
     maxAcceleration = "600000"  # default: 600000, 600000 max
-    motion_time = 10 # duration of motion (seconds)
+    motion_time = 180 # duration of motion (seconds)
     toPrintDetails = True
     STEPS_IN_METER = 75187.9699
     maxStepsPerSec = int(maxVelocity) * STEPS_IN_METER
@@ -139,8 +139,8 @@ if __name__ == '__main__':
     else:
         MR_mode = "2"  # default: 2, point to point repetative motion
         MR_delay = "0"  # default: 0, delay after finished cycle 
-        MR_first = "10"  # default: 0, beginning position
-        MR_second = "-10"  # default: 1000, second position
+        MR_first = "10000"  # default: steps forwards
+        MR_second = "-10000"  # default: steps backwards
         try:
             print("Configuring Motion Controller...")
             cmnd("MO=0;")
@@ -180,13 +180,16 @@ if __name__ == '__main__':
         cmnd("MO=1;")   
         cmnd("BG;")
 
-    # t1 = threading.Thread(target=broadcast)
+    t1 = threading.Thread(target=broadcast)
     # t2 = threading.Thread(target=countdown, args=[motion_time])
     # t1.start()
     # t2.start()
-
     # while not rospy.is_shutdown():
     #     t2.join(timeout=0.1)
+
+    while motion_time > 0:
+	motion_time = motion_time - 1
+	
 
     if motion_time <= 0:
         print("  End of test, Shutting Down...")
