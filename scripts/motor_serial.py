@@ -12,6 +12,8 @@ import threading
 
 baudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400]
 baudrate = baudrates[6]  # use baudrates[1] (9600 baud) 
+position_data = []
+stop_threading = False
 
 
 class Pub:
@@ -48,21 +50,25 @@ def check_ports():
     else:
         return ports[0]
 
-def homing(ser, current_limit):
-    """     function that runs initially and sets the homing position   """
     pass
-    
-def broadcast():
-    """     function that request current position from serial device, parses response, and 
-            broadcasts to ROS topic in motor counts """
-    while not rospy.is_shutdown():
+def read_position_thread():
+    """ this function will read the position information from the elmo controller as quickly as possible, without parsing """
+    while not rospy.is_shutdown() and not stop_threading:
         try:
             serialData = cmnd("PX;")
-            data = serialData.split(";")
-            position = float(data[1])
-        except:
-            rospy.logwarn("Failed to Read and Parse Position")
-        
+	    position_data.append(serialData)
+	except:
+	    rospy.logwarn("Failed to Read Data")
+    
+def publish_position_thread():
+    """     function that request current position from serial device, parses response, and 
+            broadcasts to ROS topic in motor counts """
+    while not rospy.is_shutdown() and not stop_threading:
+	if len(position_data) <= 0:
+	    break
+        data = serialData[0].split(";")
+        position = float(data[1])
+	# publish to rostopic
         try:
             node.pose.position.x = position
             if node.pose.position.x:
@@ -73,8 +79,6 @@ def broadcast():
             break
         except ValueError:
             continue
-
-        rate.sleep()
 
 def countdown(motion_time):
     while motion_time > 0:
@@ -179,17 +183,20 @@ if __name__ == '__main__':
         print("  Beginning Motion...")
         cmnd("MO=1;")   
         cmnd("BG;")
-
-    t1 = threading.Thread(target=broadcast)
-    # t2 = threading.Thread(target=countdown, args=[motion_time])
-    # t1.start()
-    # t2.start()
-    # while not rospy.is_shutdown():
-    #     t2.join(timeout=0.1)
+    
+    t1 = threading.Thread(target=read_position_thread)
+    t2 = threading.Thread(target=publish_position_thread)
+    t1.start()
+    t2.start()
 
     while motion_time > 0:
 	motion_time = motion_time - 1
-	
+	sleep(1)
+
+    stop_threading = False
+
+    t1.join()
+    t2.join()
 
     if motion_time <= 0:
         print("  End of test, Shutting Down...")
