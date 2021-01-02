@@ -3,7 +3,7 @@
 import serial
 import rospy
 import glob
-from geometry_msgs.msg import Pose
+from std_msgs.msg import Float32
 import gui
 import subprocess
 from numpy import pi
@@ -11,14 +11,14 @@ from time import sleep, localtime, strftime
 import threading
 
 baudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400]
-baudrate = baudrates[6]  # use baudrates[1] (9600 baud) 
+baudrate = baudrates[5]  # use baudrates[5] (115200 baud) 
 position_data = []
 stop_threading = False
 
 
 class Pub:
-    pos_publisher = rospy.Publisher("position", Pose, queue_size = 10)
-    pose = Pose()
+    pos_publisher = rospy.Publisher("position", Float32, queue_size = 10)
+    pose = Float32()
 
     def __init__(self):
         rospy.init_node("Position_Publisher")
@@ -50,10 +50,17 @@ def check_ports():
     else:
         return ports[0]
 
-    pass
+def cmnd(cmnd):
+    ser.write(cmnd)
+    try:
+        data = ser.readline()
+    except:
+        rospy.logwarn("Error Reading Response: " + cmnd)
+        return
+    return data
+
 def read_position_thread():
-    """ this function will read the position information from the elmo controller as quickly as possible, without parsing """
-    while not rospy.is_shutdown() and not stop_threading:
+    while not stop_threading:
         try:
             serialData = cmnd("PX;")
 	    position_data.append(serialData)
@@ -61,39 +68,15 @@ def read_position_thread():
 	    rospy.logwarn("Failed to Read Data")
     
 def publish_position_thread():
-    """     function that request current position from serial device, parses response, and 
-            broadcasts to ROS topic in motor counts """
-    while not rospy.is_shutdown() and not stop_threading:
+    while not stop_threading:
 	if len(position_data) <= 0:
-	    break
-        data = serialData[0].split(";")
-        position = float(data[1])
-	# publish to rostopic
-        try:
-            node.pose.position.x = position
-            if node.pose.position.x:
-                node.pos_publisher.publish(node.pose)
-                print("published: " + str(node.pose.position.x))
-        except serial.serialutil.SerialException: 
-            ser.close()
-            break
-        except ValueError:
             continue
+        else:
+            data = position_data.pop()
+            position = float(data.split(";")[1])
+            node.float32 = position
+            node.pos_publisher.publish(position)
 
-def countdown(motion_time):
-    while motion_time > 0:
-        sleep(1)
-        motion_time -= 1
-
-def cmnd(cmnd):
-    '''send cmnd over serial connection, returns response from device'''
-    ser.write(cmnd)
-    try:
-        data = ser.readline()
-    except:
-        rospy.logwarn("Error Reading Serial Response After Command: " + cmnd)
-        return
-    return data
 
 if __name__ == '__main__':
     params = gui.gui()  # [iter,accel,decel,speed,current_limit,
@@ -108,54 +91,58 @@ if __name__ == '__main__':
 
     port = check_ports()
     ser = serial.Serial(port, baudrate, timeout = 1)
+    ser.timeout = 0.0015
 
-    # print("Included Homing...")
-    # homing(ser, params[4])  # begin homing procedure
-
-    maxVelocity = "100" # default: 1000, meters per second
+    ### Motion Configurations
+    maxVelocity = "5000" # default: 1000, meters per second
     maxAcceleration = "600000"  # default: 600000, 600000 max
-    motion_time = 180 # duration of motion (seconds)
+    motion_time = 30 # duration of motion (seconds)
+    MR_mode = "2"  # default: 2, point to point repetative motion
+    MR_delay = "0"  # default: 0, delay after finished cycle 
+    MR_first = "10000"  # default: steps forwards
+    MR_second = "-10000"  # default: steps backwards
     toPrintDetails = True
     STEPS_IN_METER = 75187.9699
     maxStepsPerSec = int(maxVelocity) * STEPS_IN_METER
+    
+    ### Set Safety Configurations
+    cmnd("MO=0;")
+    resultMaxAccel = cmnd("AC="+maxAcceleration+";")
+    resultMaxDecel = cmnd("DC="+maxAcceleration+";")
+    resultMaxVel = cmnd("VH[2]="+maxVelocity+";")
+
+    if toPrintDetails:
+	print("Connection Details: ")
+        print("Port: " + ser.portstr)
+        print("Baudrate: " + str(baudrate) + "\n")
 
     if int(maxAcceleration) > 600000:
         rospy.logwarn("Max Acceleration Exceeds 600,000. Risks Overvoltage to Controller. Do not Proceed.")
 
-    if toPrintDetails:
-        print("Port: " + ser.portstr)
-        print("Baudrate: " + str(baudrate))
-
     gotInput = False
     while not gotInput:
-        test_selection = raw_input("Direct Commands (1) or Repetative Motion (2): ")
-        if test_selection is "1" or "0":
+        test_selection = raw_input("Select Motion Type\n1: Direct Command\n2: Point to Point Motion\n3: Exit\n")
+        if test_selection is "1" or "2" or "3":
             gotInput=True
 
     if test_selection is "1":
-        print("Entered Direct Command, Enter 'exit()' to exit")
+        print("Entered Direct Command, Enter 'exit()' to exit OR rm() to enter repetative motion")
         while test_selection is "1":
             userCommand = raw_input(">> ")
             if userCommand == "exit()":
-                test_selection = "x"
+                test_selection = "3"
+	    elif userCommand == "rm()":
+		test_selection = "2"
             else:
                 print("<< " + cmnd(userCommand))
-    else:
-        MR_mode = "2"  # default: 2, point to point repetative motion
-        MR_delay = "0"  # default: 0, delay after finished cycle 
-        MR_first = "10000"  # default: steps forwards
-        MR_second = "-10000"  # default: steps backwards
+    if test_selection is "2":
         try:
             print("Configuring Motion Controller...")
-            cmnd("MO=0;")
-            resultMaxAccel = cmnd("AC="+maxAcceleration+";")
-            resultMaxDecel = cmnd("DC="+maxAcceleration+";")
             cmnd("MO=1;")
             resultMode = cmnd("MR[1]="+MR_mode+";")
             resultDelay = cmnd("MR[2]="+MR_delay+";")
             resultFirst = cmnd("MR[3]="+MR_first+";")
             resultSecond = cmnd("MR[4]="+MR_second+";")
-            resultMaxVel = cmnd("VH[2]="+maxVelocity+";")
             cmnd("MO=0;")
         except:
             rospy.logfatal("failed to set rep. motion, exiting...")
@@ -166,9 +153,6 @@ if __name__ == '__main__':
             print("Delay:     "+resultDelay)
             print("Posit A:   "+resultFirst)
             print("Posit B:   "+resultSecond)
-            print("Max Vel:   "+resultMaxVel)
-            print("Max Accel: "+resultMaxAccel)
-            print("Max Decel: "+resultMaxDecel)
             print("Duration:  "+str(motion_time)+" seconds")
             # print("----------------------------------------\n")
 
@@ -180,28 +164,33 @@ if __name__ == '__main__':
         if data == "MO=0;;":
             rospy.logfatal("  Motor failed to initialize:  " + data)
             exit()
-        print("  Beginning Motion...")
+        print("Beginning Motion...")
+        sleep(1)
         cmnd("MO=1;")   
         cmnd("BG;")
     
-    t1 = threading.Thread(target=read_position_thread)
-    t2 = threading.Thread(target=publish_position_thread)
-    t1.start()
-    t2.start()
+	t1 = threading.Thread(target=read_position_thread)
+    	t2 = threading.Thread(target=publish_position_thread)
 
-    while motion_time > 0:
-	motion_time = motion_time - 1
-	sleep(1)
+	t1.start()
+	t2.start()
 
-    stop_threading = False
+	sleep(motion_time)
 
-    t1.join()
-    t2.join()
+	stop_threading = True
 
-    if motion_time <= 0:
-        print("  End of test, Shutting Down...")
-        cmnd("ST;")
+	t1.join()
+	t2.join()
+
+	if not rospy.is_shutdown():
+	    print("End of test, Shutting Down...")
+	    cmnd("ST;")
+        else:
+	    print("Shutting Down...")
+	    cmnd("ST;")
+	    cmnd("MO=0;")
     else:
-        print("\n  Shutting Down...")
+        print("Shutting Down...")
         cmnd("ST;")
         cmnd("MO=0;")
+

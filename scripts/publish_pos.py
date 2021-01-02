@@ -4,15 +4,15 @@ import serial
 import rospy
 import glob
 import threading
-from geometry_msgs.msg import Pose
+from std_msgs.msg import Float32
 from time import sleep
 
 stop_threading = False
 position_data = []
 
 class Pub:
-    pos_publisher = rospy.Publisher("position", Pose, queue_size=10)
-    pose = Pose()
+    pos_publisher = rospy.Publisher("position", Float32, queue_size=10)
+    pos = Float32()
 
     def __init__(self):
         rospy.init_node("Position_Publisher")
@@ -63,22 +63,20 @@ def publish_position_thread():
         else:
             try:
                 data = position_data.pop()
-                position = float(data.split(";")[1])
-                print("position: " + str(position))
-                node.pose.position.x = position
-                if node.pose.position.x:
-                    node.pos_publisher.publish(node.pose)
+                pos = float(data.split(";")[1])
+                node.float32 = pos
+                node.pos_publisher.publish(pos)
             except:
                 print("Failed to publish...")               
 
 if __name__ == '__main__':
     node = Pub()
     baudrate = 115200
-    time = 10  # seconds
+    time = 1000  # seconds
     port = getPort()
     ser = serial.Serial(port, baudrate, timeout=1)
     ser.timeout = 0.0015  # based on unrestrained response time
-    # '''
+
     t1 = threading.Thread(target=read_position_thread)
     t2 = threading.Thread(target=publish_position_thread)
 
