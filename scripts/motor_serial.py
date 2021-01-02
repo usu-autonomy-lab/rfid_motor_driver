@@ -7,7 +7,7 @@ from std_msgs.msg import Float32
 import gui
 import subprocess
 from numpy import pi
-from time import sleep, localtime, strftime
+from time import sleep
 import threading
 
 baudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400]
@@ -183,10 +183,10 @@ if __name__ == '__main__':
 	t2.join()
 
 	if not rospy.is_shutdown():
-	    print("End of test, Shutting Down...")
+	    print("End of Test, Shutting Down...")
 	    cmnd("ST;")
         else:
-	    print("Shutting Down...")
+	    print("Forced Exit, Shutting Down...")
 	    cmnd("ST;")
 	    cmnd("MO=0;")
     else:
