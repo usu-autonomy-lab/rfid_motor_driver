@@ -13,6 +13,7 @@ import threading
 baudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400]
 baudrate = baudrates[5]  # use baudrates[5] (115200 baud) 
 position_data = []
+amps_data = []
 stop_threading = False
 
 
@@ -22,6 +23,12 @@ class Pub:
 
     def __init__(self):
         rospy.init_node("Position_Publisher")
+class PubAmp:
+    amps_publisher = rospy.Publisher("amperage", Float32, queue_size = 10)
+    amps = Float32()
+    
+    def __init__(self):
+        rospy.init_node("Amperage_Publisher")
 
 def check_ports():
     """     function that checks available serial ports 
@@ -74,9 +81,24 @@ def publish_position_thread():
         else:
             data = position_data.pop()
             position = float(data.split(";")[1])
-            node.float32 = position
             node.pos_publisher.publish(position)
 
+def read_amps_thread():
+    while not stop_threading:
+        try:
+            serialData = cmnd("AN[3];")
+	    position_data.append(serialData)
+	except:
+	    rospy.logwarn("Failed to Read Data")
+    
+def publish_amps_thread():
+    while not stop_threading:
+	if len(amps_data) <= 0:
+            continue
+        else:
+            data = amps_data.pop()
+            amps = float(data.split(";")[1])
+            node.amps_publisher.publish(amps)
 
 if __name__ == '__main__':
     params = gui.gui()  # [iter,accel,decel,speed,current_limit,
@@ -86,7 +108,8 @@ if __name__ == '__main__':
                     'x:='+str(params[5]), 'y:='+str(params[6]),
                     'z:='+str(params[7]), 'angle_rad:='+str(params[8] * 180 / pi)])
     """
-    node = Pub()
+    # node = Pub()
+    # pubAmps = PubAmps()
     rate = rospy.Rate(params[9])
 
     port = check_ports()
