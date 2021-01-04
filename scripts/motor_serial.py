@@ -77,6 +77,16 @@ def publish_position_thread():
             node.float32 = position
             node.pos_publisher.publish(position)
 
+def homing():
+    cmnd("MO=0;") # Stop All motion, Send shutoff command
+    cmnd("MO=1;")
+    cmnd("VJ=-100")
+    while True:
+        # Check if Current is to High
+        # If to high, exit
+    # Stop Motion
+    # Set PX=0
+
 
 if __name__ == '__main__':
     params = gui.gui()  # [iter,accel,decel,speed,current_limit,
