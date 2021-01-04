@@ -81,6 +81,16 @@ def publish_data_thread():
             message.amperage = float(data2.split(";")[1])
         node.publisher.publish(message)
 
+def homing():
+    cmnd("MO=0;") # Stop All motion, Send shutoff command
+    cmnd("MO=1;")
+    cmnd("VJ=-100")
+    while True:
+        # Check if Current is to High
+        # If to high, exit
+    # Stop Motion
+    # Set PX=0
+
 if __name__ == '__main__':
     params = gui.gui()  # [iter,accel,decel,speed,current_limit,
                         #  bench_x,bench_y,bench_z,bench_angle, publish rate]
