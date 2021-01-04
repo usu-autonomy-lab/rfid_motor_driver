@@ -4,6 +4,7 @@ import serial
 import rospy
 import glob
 from std_msgs.msg import Float32
+from motor_driver.msg import MotionCart
 import gui
 import subprocess
 from numpy import pi
@@ -13,22 +14,15 @@ import threading
 baudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400]
 baudrate = baudrates[5]  # use baudrates[5] (115200 baud) 
 position_data = []
-amps_data = []
+amperage_data = []
 stop_threading = False
 
 
 class Pub:
-    pos_publisher = rospy.Publisher("position", Float32, queue_size = 10)
-    pose = Float32()
+    publisher = rospy.Publisher("cart", MotionCart, queue_size = 10)
 
     def __init__(self):
-        rospy.init_node("Position_Publisher")
-class PubAmp:
-    amps_publisher = rospy.Publisher("amperage", Float32, queue_size = 10)
-    amps = Float32()
-    
-    def __init__(self):
-        rospy.init_node("Amperage_Publisher")
+        rospy.init_node("cart")
 
 def check_ports():
     """     function that checks available serial ports 
@@ -66,39 +60,26 @@ def cmnd(cmnd):
         return
     return data
 
-def read_position_thread():
+def read_data_thread():
     while not stop_threading:
         try:
-            serialData = cmnd("PX;")
-	    position_data.append(serialData)
+            posData = cmnd("PX;")
+	    position_data.append(posData)
+            ampData = cmnd("AN[3];")
+	    amperage_data.append(ampData)
 	except:
-	    rospy.logwarn("Failed to Read Data")
-    
-def publish_position_thread():
-    while not stop_threading:
-	if len(position_data) <= 0:
-            continue
-        else:
-            data = position_data.pop()
-            position = float(data.split(";")[1])
-            node.pos_publisher.publish(position)
+	    rospy.logwarn("Failed to Read Position Data")
 
-def read_amps_thread():
+def publish_data_thread():
+    message = MotionCart()
     while not stop_threading:
-        try:
-            serialData = cmnd("AN[3];")
-	    position_data.append(serialData)
-	except:
-	    rospy.logwarn("Failed to Read Data")
-    
-def publish_amps_thread():
-    while not stop_threading:
-	if len(amps_data) <= 0:
-            continue
-        else:
-            data = amps_data.pop()
-            amps = float(data.split(";")[1])
-            node.amps_publisher.publish(amps)
+        if len(position_data) is not 0:
+            data1 = position_data.pop()
+            message.position = float(data1.split(";")[1])
+        if len(amperage_data) is not 0:
+            data2 = amperage_data.pop()
+            message.amperage = float(data2.split(";")[1])
+        node.publisher.publish(message)
 
 if __name__ == '__main__':
     params = gui.gui()  # [iter,accel,decel,speed,current_limit,
@@ -108,18 +89,16 @@ if __name__ == '__main__':
                     'x:='+str(params[5]), 'y:='+str(params[6]),
                     'z:='+str(params[7]), 'angle_rad:='+str(params[8] * 180 / pi)])
     """
-    # node = Pub()
-    # pubAmps = PubAmps()
+    node = Pub()
     rate = rospy.Rate(params[9])
 
     port = check_ports()
-    ser = serial.Serial(port, baudrate, timeout = 1)
-    ser.timeout = 0.0015
+    ser = serial.Serial(port, baudrate, timeout = 0.0015)
 
     ### Motion Configurations
     maxVelocity = "5000" # default: 1000, meters per second
     maxAcceleration = "600000"  # default: 600000, 600000 max
-    motion_time = 30 # duration of motion (seconds)
+    motion_time = 300 # duration of motion (seconds)
     MR_mode = "2"  # default: 2, point to point repetative motion
     MR_delay = "0"  # default: 0, delay after finished cycle 
     MR_first = "10000"  # default: steps forwards
@@ -192,8 +171,8 @@ if __name__ == '__main__':
         cmnd("MO=1;")   
         cmnd("BG;")
     
-	t1 = threading.Thread(target=read_position_thread)
-    	t2 = threading.Thread(target=publish_position_thread)
+	t1 = threading.Thread(target=read_data_thread)
+    	t2 = threading.Thread(target=publish_data_thread)
 
 	t1.start()
 	t2.start()
