@@ -3,9 +3,8 @@
 import serial
 import rospy
 import glob
-from std_msgs.msg import Float32
+# from std_msgs.msg import Float32
 from motor_driver.msg import MotionCart
-import gui
 import subprocess
 from numpy import pi
 from time import sleep
@@ -65,14 +64,15 @@ def read_data_thread():
         try:
             posData = cmnd("PX;")
 	    position_data.append(posData)
-            ampData = cmnd("AN[3];")
+            ampData = cmnd("VX;")
+            # ampData = cmnd("AN[3];")
 	    amperage_data.append(ampData)
 	except:
 	    rospy.logwarn("Failed to Read Position Data")
 
 def publish_data_thread():
     message = MotionCart()
-    while not stop_threading:
+    while not stop_threading and not rospy.is_shutdown():
         if len(position_data) is not 0:
             data1 = position_data.pop()
             message.position = float(data1.split(";")[1])
@@ -82,51 +82,68 @@ def publish_data_thread():
         node.publisher.publish(message)
 
 def homing():
-    cmnd("MO=0;") # Stop All motion, Send shutoff command
-    cmnd("MO=1;")
-    cmnd("VJ=-100")
-    while True:
-        # Check if Current is to High
-        # If to high, exit
-    # Stop Motion
-    # Set PX=0
+    print("Beginning Homing Motion...")
+    cmnd("mo=1;")
+    cmnd("pr=1;")
+    cmnd("bg;")
+    cmnd("jv=-20000;")
+    cmnd("bg;")
+
+    notDone = True
+    while notDone and not rospy.is_shutdown():
+        data = cmnd("AN[3];").split(";")[1]
+        amperage = float(data)
+        if abs(amperage) >= 8:
+            print("Hit Current Limit, Homing complete.")
+            notDone = False
+
+    cmnd("MO=0;")
+    sleep(1)
+    cmnd("PX=0;")
 
 if __name__ == '__main__':
-    params = gui.gui()  # [iter,accel,decel,speed,current_limit,
-                        #  bench_x,bench_y,bench_z,bench_angle, publish rate]
+    # params = gui.gui()  # [motion_time, maxvel, rate]
     """ errors within the following roslaunch file, removed for test...
     subprocess.call(['roslaunch', 'bench_tf2', 'bench_test.launch', 
                     'x:='+str(params[5]), 'y:='+str(params[6]),
                     'z:='+str(params[7]), 'angle_rad:='+str(params[8] * 180 / pi)])
     """
     node = Pub()
-    rate = rospy.Rate(params[9])
+    rate = rospy.Rate(300)
 
     port = check_ports()
     ser = serial.Serial(port, baudrate, timeout = 0.0015)
 
+    #######################################
     ### Motion Configurations
-    maxVelocity = "5000" # default: 1000, meters per second
+    #######################################
+    maxVelocity = "100" # default: 30, millimeters per second
     maxAcceleration = "600000"  # default: 600000, 600000 max
     motion_time = 300 # duration of motion (seconds)
     MR_mode = "2"  # default: 2, point to point repetative motion
-    MR_delay = "0"  # default: 0, delay after finished cycle 
+    MR_delay = "1"  # default: 0, delay after finished cycle 
     MR_first = "10000"  # default: steps forwards
     MR_second = "-10000"  # default: steps backwards
     toPrintDetails = True
-    STEPS_IN_METER = 75187.9699
-    maxStepsPerSec = int(maxVelocity) * STEPS_IN_METER
+    STEPS_IN_MM = 75.1879699
+    maxStepsPerSec = str(int(maxVelocity) * STEPS_IN_MM)
     
+    #######################################
     ### Set Safety Configurations
+    #######################################
     cmnd("MO=0;")
     resultMaxAccel = cmnd("AC="+maxAcceleration+";")
     resultMaxDecel = cmnd("DC="+maxAcceleration+";")
-    resultMaxVel = cmnd("VH[2]="+maxVelocity+";")
+    resultMaxVel = cmnd("VH[2]="+maxStepsPerSec+";")
+    #######################################
 
     if toPrintDetails:
 	print("Connection Details: ")
         print("Port: " + ser.portstr)
-        print("Baudrate: " + str(baudrate) + "\n")
+        print("Baudrate: " + str(baudrate))
+
+    if "yes" == raw_input("Run homing procedure? (yes/no): "):
+        homing()
 
     if int(maxAcceleration) > 600000:
         rospy.logwarn("Max Acceleration Exceeds 600,000. Risks Overvoltage to Controller. Do not Proceed.")
@@ -143,6 +160,8 @@ if __name__ == '__main__':
             userCommand = raw_input(">> ")
             if userCommand == "exit()":
                 test_selection = "3"
+            elif userCommand == "pub()":
+                thread
 	    elif userCommand == "rm()":
 		test_selection = "2"
             else:
