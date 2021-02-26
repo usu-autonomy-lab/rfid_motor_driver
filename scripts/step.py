@@ -3,7 +3,7 @@
 import serial
 import glob
 import sys
-from time import sleep
+from time import sleep, time, localtime
 
 def check_ports():
     """     function that checks available serial ports 
@@ -42,7 +42,10 @@ def cmnd(serial, cmnd):
     return data.decode('utf-8')
 
 def readData(response):
-    return float(response.split(";")[1])
+    try:
+        return float(response.split(";")[1])
+    except:
+        return [0]
 
 def homing(serial):
     cmnd(serial, "ST;")
@@ -55,8 +58,9 @@ def homing(serial):
     notDone = True
     while notDone:
         amperage = readData(cmnd(serial, "AN[3];"))
-        if abs(amperage) >= 9:
-            print("Homing Complete, Hit Current Limit (9 Amps)")
+        #print("amperage:", str(amperage))
+        if abs(amperage) >= 10:
+            print("Homing Complete, Hit Current Limit (10 Amps)")
             notDone = False
     cmnd(serial, "MO=0;")
     sleep(0.25)
@@ -66,11 +70,11 @@ def homing(serial):
 
 if __name__ == '__main__':
     ## Default Test Parameters
-    start = 300  # mm
-    step = 1  # mm
-    reps = 3  # repititions
-    delay = 0.5  # s
-    velocity = 100  # mm/s
+    start = 1031  # mm
+    step = -5  # mm
+    reps = 80  # repititions
+    delay = 0.1  # s
+    velocity = 200  # mm/s
 
     ## Advanced Test Parameters
     baudrate = 115200
@@ -92,7 +96,7 @@ if __name__ == '__main__':
                 elif "step" in arg:
                     arg = arg.split("=")
                     step = float(arg[1])
-                elif "reps" in arg:
+                elif "rep" in arg:
                     arg = arg.split("=")
                     reps = int(arg[1])
                 elif "delay" in arg:
@@ -152,13 +156,24 @@ if __name__ == '__main__':
 
     input("Proceed with test? (Press any key)")
     cmnd(ser, "PR=" + stepsize + ";")
-
-    for i in range(reps):
-        # record arrival time stamp
-        cmnd(ser, "BG;")
-        sleep(0.2)
-        while readData(cmnd(ser, "MS;")) != float(1):
-            pass
-        sleep(delay)
-        # record departure time stamp
-
+    with open("stepoutput6.txt", 'w') as f:
+        f.write("Step Test Parameters -------" + "\n")
+        f.write("          Time: " + "1000" + "\n")
+        f.write("      Baudrate: " + str(baudrate) + "\n")
+        f.write("          Port: " + port + "\n")
+        f.write("Start Position: " + str(start) + " mm\t[" + startpos + "]" + "\n")
+        f.write("     Step Size: " + str(step) + " mm\t[" + stepsize + "]" + "\n")
+        f.write("  End Position: " + str(endpos) + " mm\t[" + str(endpos * STEPS_IN_MM) + "]" + "\n")
+        f.write("   Repititions: " + str(reps)+ "\n")
+        f.write("         Delay: " + str(delay) + " s"+ "\n")
+        f.write("      Velocity: " + str(velocity) + "\t[" + resultMaxVel + "]"+ "\n")
+        f.write("  Acceleration: " + str(int(int(maxAccel) * 1/STEPS_IN_MM)) + "\t[" + resultMaxAccel + "]"+ "\n")
+        f.write("--------------------------"+ "\n")
+        for i in range(reps):
+            arrival = time()
+            cmnd(ser, "BG;")
+            while readData(cmnd(ser, "MS;")) != float(1) or float(0.0):
+                pass
+            sleep(delay)
+            departure = time()
+            f.write(str(i) + ": " + str(arrival) + " - " + str(departure) + "\n")
